@@ -1,0 +1,17 @@
+# Symfony / PHP
+/vendor/
+var/
+.env.local
+.env.*.local
+
+# Node / Vue
+node_modules/
+dist/
+*.log
+
+# MacOS / Windows
+.DS_Store
+Thumbs.db
+
+# PhpStorm
+.idea/
