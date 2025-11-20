@@ -4,6 +4,8 @@ import { useRoute, useRouter } from "vue-router";
 import {
   fetchShoppingList,
   type ShoppingListResponse,
+  updateItem,
+  type UpdateItemPayload
 } from "../api/shoppingListApi";
 
 const route = useRoute();
@@ -35,9 +37,29 @@ function toggleMode() {
   editMode.value = !editMode.value;
 }
 
-function toggleItemChecked(item: ShoppingListResponse["items"][number]) {
-  item.is_checked = !item.is_checked;
-  // TODO: PUT /lists/{listId}/items/{itemId} um is_checked in der DB zu speichern
+async function toggleItemChecked(item: ShoppingListItem) {
+  if (!list.value) return;
+
+  const previous = item.is_checked;
+  const next = !previous;
+
+  item.is_checked = next;
+
+  try {
+    const updated = await updateItem(list.value.id, item.id, {
+      name: item.name,
+      quantity: item.quantity,
+      unit: item.unit,
+      note: item.note ?? null,
+      is_checked: next,
+    });
+
+    Object.assign(item, updated);
+  } catch (e) {
+    console.error(e);
+    item.is_checked = previous;
+    alert("Der gekaufte Status konnte nicht gespeichert werden.");
+  }
 }
 
 function handleBack() {
