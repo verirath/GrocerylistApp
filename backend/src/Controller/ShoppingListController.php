@@ -33,14 +33,14 @@ class ShoppingListController extends AbstractController
         $name = $data['name'] ?? null;
         if (!is_string($name) || trim($name) === '') {
             return $this->validationError([
-                ['field' => 'name', 'message' => 'Name darf nicht leer sein.'],
+                ['field' => 'name', 'message' => 'name is required and must not be empty.'],
             ], 'Field "name" is required and must not be empty.');
         }
 
         $itemsData = $data['items'] ?? [];
         if (!is_array($itemsData)) {
             return $this->validationError([
-                ['field' => 'items', 'message' => '"items" muss ein Array sein.'],
+                ['field' => 'items', 'message' => 'items must be an array if provided.'],
             ], 'Field "items" must be an array if provided.');
         }
 
@@ -127,6 +127,22 @@ class ShoppingListController extends AbstractController
             $this->serializeList($list),
             Response::HTTP_CREATED
         );
+    }
+
+    // GET /lists
+    // gets all the lists
+    #[Route('/lists', name: 'get_all_lists', methods: ['GET'])]
+    public function getAllLists(EntityManagerInterface $em): JsonResponse
+    {
+        $lists = $em->getRepository(ShoppingList::class)->findAll();
+
+        $data = [];
+        foreach ($lists as $list) {
+            /** @var ShoppingList $list */
+            $data[] = $this->serializeList($list);
+        }
+
+        return $this->json($data);
     }
 
     //GET /lists/{id}/items
