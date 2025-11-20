@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import ListOverview from "@/pages/ListOverview.vue";
+import { RouterView } from "vue-router";
 </script>
 
 <template>
- <ListOverview />
+  <RouterView />
 </template>
-
-<style scoped></style>

@@ -42,7 +42,7 @@ defineProps({
   font-size: 18px;
   font-weight: 600;
   margin: 0 0 6px 0;
-  color: #111827;
+  color: #385f63;
   font-family: "Roboto", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
   sans-serif;
 }
@@ -64,7 +64,6 @@ defineProps({
 }
 
 .item-name {
-  color: #374151;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -83,7 +82,6 @@ defineProps({
   color: #6b7280;
 }
 
-/* --- MOBILE ONLY --- */
 @media (max-width: 600px) {
   .card {
     padding: 16px 18px;
@@ -94,6 +92,7 @@ defineProps({
 
   .card-title {
     font-size: 20px;
+    color: #385f63;
   }
 
   .item-row {

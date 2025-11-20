@@ -8,6 +8,7 @@ import {
 } from "../api/shoppingListApi";
 import ShoppingListPreview from "../components/ShoppingListPreview.vue";
 import NewListModal from "../components/NewListModal.vue";
+import { RouterLink } from "vue-router";
 
 const lists = ref<ShoppingListResponse[]>([]);
 const showCreateModal = ref(false);
@@ -53,11 +54,15 @@ onMounted(loadLists);
       {{ loadError }}
     </div>
     <div v-else class="lists">
-      <ShoppingListPreview
-        v-for="list in lists"
-        :key="list.id"
-        :list="list"
-      />
+        <RouterLink
+          v-for="list in lists"
+          :key="list.id"
+          :to="{ name: 'list-detail', params: { id: list.id } }"
+          class="list-link"
+        >
+          <ShoppingListPreview :list="list" />
+        </RouterLink>
+
 
       <p v-if="lists.length === 0" class="status-text">
         Noch keine Einkaufsliste – erstelle die erste mit dem + Button.
@@ -80,7 +85,6 @@ onMounted(loadLists);
 .page {
   min-height: 100vh;
   padding: 16px 12px 24px;
-  background: #f9fafb;
   display: flex;
   flex-direction: column;
 }
@@ -90,29 +94,13 @@ onMounted(loadLists);
   font-size: 24px;
   font-weight: 600;
   text-align: center;
-  font-family: Roboto Mono, Menlo, Consolas, monospace,
-  "Segoe UI", sans-serif;
-}
-
-.lists {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.status-text {
-  font-size: 14px;
-  color: #6b7280;
-}
-
-.status-text.error {
-  color: #b91c1c;
+  font-family: Roboto Mono, Menlo, Consolas, monospace, "Segoe UI", sans-serif;
 }
 
 .fab {
   position: fixed;
   right: 20px;
-  bottom: 20px;
+  bottom: 24px;
   width: 56px;
   height: 56px;
   border-radius: 999px;
@@ -128,11 +116,21 @@ onMounted(loadLists);
   cursor: pointer;
 }
 
+.list-link {
+  all: unset;
+  display: block;
+  cursor: pointer;
+}
+
 @media (min-width: 768px) {
   .page {
     max-width: 640px;
     margin: 0 auto;
     padding-top: 24px;
+  }
+
+  .header {
+    font-size: 24px;
   }
 }
 </style>
