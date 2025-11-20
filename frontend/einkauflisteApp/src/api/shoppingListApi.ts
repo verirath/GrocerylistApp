@@ -37,17 +37,6 @@ export interface UpdateItemPayload {
   is_checked: boolean;
 }
 
-export interface CreateItemPayload {
-  id: number;
-  name: string;
-  quantity: number;
-  unit: string;
-  note?: string | null;
-  is_checked: boolean;
-  created_at: string;
-  updated_at?: string | null;
-}
-
 const API_BASE = "http://127.0.0.1:8000";
 
 export async function fetchShoppingLists(): Promise<ShoppingListResponse[]> {
@@ -108,3 +97,32 @@ export async function updateItem(
 
   return await res.json();
 }
+
+export async function createItem(
+  listId: number,
+  payload: NewItemPayload
+): Promise<ShoppingListItem> {
+  const res = await fetch(`${API_BASE}/lists/${listId}/item`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to create item: ${res.status} ${text}`);
+  }
+
+  const updatedList: ShoppingListResponse = await res.json();
+
+  const createdItem = updatedList.items[updatedList.items.length - 1];
+
+  if (!createdItem) {
+    throw new Error("API did not return created item in updated list.");
+  }
+
+  return createdItem;
+}
+
+
+

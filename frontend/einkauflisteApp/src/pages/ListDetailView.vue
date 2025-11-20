@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import {ref, onMounted, computed} from "vue";
-import {useRoute, useRouter} from "vue-router";
+import { ref, onMounted, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import {
   fetchShoppingList,
   updateItem,
+  createItem,
   type ShoppingListResponse,
+  type NewItemPayload,
 } from "../api/shoppingListApi";
+import NewItemModal from "../components/NewItemModal.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -20,6 +23,8 @@ const editMode = ref(false);
 const draftList = ref<ShoppingListResponse | null>(null);
 const saving = ref(false);
 const saveError = ref<string | null>(null);
+
+const showAddItemModal = ref(false);
 
 const activeList = computed<ShoppingListResponse | null>(() =>
   editMode.value && draftList.value ? draftList.value : list.value
@@ -113,7 +118,26 @@ function handleBack() {
 }
 
 function handleAddItem() {
-  console.log("TODO: neues Item im Detail-View hinzufügen");
+  showAddItemModal.value = true;
+}
+
+async function handleCreateItem(payload: NewItemPayload) {
+  if (!list.value) return;
+
+  try {
+    const created = await createItem(list.value.id, payload);
+
+    list.value.items.push(created);
+
+    if (draftList.value) {
+      draftList.value.items.push(JSON.parse(JSON.stringify(created)));
+    }
+
+    showAddItemModal.value = false;
+  } catch (e) {
+    console.error(e);
+    saveError.value = "Neues Item konnte nicht angelegt werden.";
+  }
 }
 
 onMounted(loadList);
@@ -132,23 +156,15 @@ onMounted(loadList);
         </button>
 
         <div class="mode-toggle-wrapper">
-          <span :class="['mode-label', !editMode && 'active']">
-            <span class="mode-icon">🛒</span>
-            Einkaufen
-          </span>
-
+          <span :class="['mode-label', !editMode && 'active']">🛒</span>
           <button
             type="button"
             class="mode-pill"
-            @click="editMode ? cancelEdit() : enterEditMode()"
-          >
+            @click="editMode ? cancelEdit() : enterEditMode()">
             <span :class="['mode-thumb', editMode && 'right']"></span>
           </button>
 
-          <span :class="['mode-label', editMode && 'active']">
-            <span class="mode-icon">✏️</span>
-            Bearbeiten
-          </span>
+          <span :class="['mode-label', editMode && 'active']">✏️</span>
         </div>
       </div>
 
@@ -164,7 +180,7 @@ onMounted(loadList);
         <div class="detail-header">
           <h1 class="list-title">
             <template v-if="editMode">
-              <input v-model="activeList.name" class="title-input"/>
+              <input v-model="activeList.name" class="title-input" />
             </template>
             <template v-else>
               {{ activeList.name }}
@@ -265,6 +281,7 @@ onMounted(loadList);
         </div>
       </section>
 
+      <!-- FAB nur im Edit-Mode -->
       <button
         v-if="activeList && editMode"
         class="fab"
@@ -273,6 +290,12 @@ onMounted(loadList);
       >
         +
       </button>
+
+      <NewItemModal
+        v-if="activeList && editMode && showAddItemModal"
+        @close="showAddItemModal = false"
+        @submit="handleCreateItem"
+      />
     </main>
   </div>
 </template>
@@ -323,19 +346,12 @@ onMounted(loadList);
 }
 
 .mode-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
   color: #9ca3af;
 }
 
 .mode-label.active {
   color: #111827;
   font-weight: 500;
-}
-
-.mode-icon {
-  font-size: 14px;
 }
 
 .mode-pill {
