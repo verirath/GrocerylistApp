@@ -24,7 +24,7 @@ const draftList = ref<ShoppingListResponse | null>(null);
 const saving = ref(false);
 const saveError = ref<string | null>(null);
 
-const showAddItemModal = ref(false);
+const showNewItemModal = ref(false);
 
 const activeList = computed<ShoppingListResponse | null>(() =>
   editMode.value && draftList.value ? draftList.value : list.value
@@ -117,8 +117,19 @@ function handleBack() {
   router.back();
 }
 
-function handleAddItem() {
-  showAddItemModal.value = true;
+async function handleAddItems(payload: NewItemPayload[]) {
+  if (!activeList.value) return;
+
+  for (const newItem of payload) {
+    const created = await createItem(activeList.value.id, newItem);
+    if (draftList.value) {
+      draftList.value.items.push(created);
+    } else if (list.value) {
+      list.value.items.push(created);
+    }
+  }
+
+  showNewItemModal.value = false;
 }
 
 async function handleCreateItem(payload: NewItemPayload) {
@@ -133,7 +144,7 @@ async function handleCreateItem(payload: NewItemPayload) {
       draftList.value.items.push(JSON.parse(JSON.stringify(created)));
     }
 
-    showAddItemModal.value = false;
+    showNewItemModal.value = false;
   } catch (e) {
     console.error(e);
     saveError.value = "Neues Item konnte nicht angelegt werden.";
@@ -281,21 +292,21 @@ onMounted(loadList);
         </div>
       </section>
 
-      <!-- FAB nur im Edit-Mode -->
       <button
         v-if="activeList && editMode"
         class="fab"
         type="button"
-        @click="handleAddItem"
+        @click="showNewItemModal = true"
       >
         +
       </button>
 
       <NewItemModal
-        v-if="activeList && editMode && showAddItemModal"
-        @close="showAddItemModal = false"
-        @submit="handleCreateItem"
+        v-if="activeList && editMode && showNewItemModal"
+        @close="showNewItemModal = false"
+        @submit="handleAddItems"
       />
+
     </main>
   </div>
 </template>

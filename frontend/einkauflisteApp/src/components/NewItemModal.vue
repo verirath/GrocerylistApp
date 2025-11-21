@@ -4,102 +4,125 @@ import type { NewItemPayload } from "../api/shoppingListApi";
 
 const emit = defineEmits<{
   (e: "close"): void;
-  (e: "submit", payload: NewItemPayload): void;
+  (e: "submit", payload: NewItemPayload[]): void;
 }>();
 
-const item = ref<NewItemPayload>({
-  name: "",
-  quantity: 1,
-  unit: "PCS",
-  note: "",
-});
+const items = ref<NewItemPayload[]>([
+  { name: "", quantity: 1, unit: "PCS", note: "" },
+]);
 
 const submitting = ref(false);
 const errorMessage = ref<string | null>(null);
 
-function handleClose() {
-  if (submitting.value) return;
-  emit("close");
+function addItemRow() {
+  items.value.push({ name: "", quantity: 1, unit: "PCS", note: "" });
+}
+
+function removeItemRow(index: number) {
+  items.value.splice(index, 1);
 }
 
 async function handleSubmit() {
-  if (!item.value.name.trim()) {
-    errorMessage.value = "Bitte einen Produktnamen angeben.";
+  const prepared = items.value
+    .filter((it) => it.name.trim() !== "")
+    .map((it) => ({
+      name: it.name.trim(),
+      quantity: it.quantity || 1,
+      unit: it.unit,
+      note: it.note?.trim() || undefined,
+    }));
+
+  if (prepared.length === 0) {
+    errorMessage.value = "Mindestens ein Item mit Namen angeben.";
     return;
   }
-
-  const payload: NewItemPayload = {
-    name: item.value.name.trim(),
-    quantity: item.value.quantity || 1,
-    unit: item.value.unit,
-    note: item.value.note?.trim() || undefined,
-  };
 
   submitting.value = true;
   errorMessage.value = null;
 
   try {
-    emit("submit", payload);
+    emit("submit", prepared);
   } finally {
     submitting.value = false;
   }
+}
+
+function handleClose() {
+  emit("close");
 }
 </script>
 
 <template>
   <div class="modal-backdrop" @click.self="handleClose">
     <div class="modal-card">
-      <h2 class="modal-title">Neues Item</h2>
+      <h2 class="modal-title">Neue Artikel zur Liste hinzufügen</h2>
 
       <div class="items-section">
         <div class="items-header">
-          <span>Item</span>
+          <span>Items</span>
+          <button type="button" class="small-btn" @click="addItemRow">
+            + Item
+          </button>
         </div>
 
-        <div class="item-block">
-          <div class="item-top-row">
-            <input
-              v-model="item.name"
-              class="input item-name"
-              type="text"
-              placeholder="Produkt"
-            />
+        <div class="items-scroll">
+          <div
+            v-for="(item, index) in items"
+            :key="index"
+            class="item-block"
+          >
+            <div class="item-header-row">
+              <button
+                type="button"
+                class="remove-btn"
+                @click="removeItemRow(index)"
+                v-if="items.length > 1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div class="item-top-row">
+              <input
+                v-model="item.name"
+                class="input item-name"
+                type="text"
+                placeholder="Produkt"
+              />
+
+              <input
+                v-model.number="item.quantity"
+                class="input item-qty"
+                type="number"
+                min="0.01"
+                step="0.01"
+              />
+
+              <select v-model="item.unit" class="input item-unit">
+                <option value="PCS">PCS</option>
+                <option value="G">G</option>
+                <option value="KG">KG</option>
+                <option value="ML">ML</option>
+                <option value="L">L</option>
+                <option value="PACK">PACK</option>
+              </select>
+            </div>
 
             <input
-              v-model.number="item.quantity"
-              class="input item-qty"
-              type="number"
-              min="0.01"
-              step="0.01"
+              v-model="item.note"
+              class="input item-note"
+              placeholder="Notiz zum Item (optional)"
             />
-
-            <select v-model="item.unit" class="input item-unit">
-              <option value="PCS">PCS</option>
-              <option value="G">G</option>
-              <option value="KG">KG</option>
-              <option value="ML">ML</option>
-              <option value="L">L</option>
-              <option value="PACK">PACK</option>
-            </select>
           </div>
-
-          <input
-            v-model="item.note"
-            class="input item-note"
-            placeholder="Notiz zum Item (optional)"
-          />
         </div>
       </div>
 
-      <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
+      <p v-if="errorMessage" class="error">
+        {{ errorMessage }}
+      </p>
 
       <div class="actions">
-        <button
-          type="button"
-          class="secondary"
-          :disabled="submitting"
-          @click="handleClose"
-        >
+        <button type="button" class="secondary" @click="handleClose">
           Abbrechen
         </button>
         <button
@@ -108,7 +131,7 @@ async function handleSubmit() {
           :disabled="submitting"
           @click="handleSubmit"
         >
-          {{ submitting ? "Hinzufügen…" : "Item hinzufügen" }}
+          Items hinzufügen
         </button>
       </div>
     </div>
@@ -116,6 +139,8 @@ async function handleSubmit() {
 </template>
 
 <style scoped>
+/* gleiche Styles wie dein NewListModal, damit es konsistent bleibt */
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -141,6 +166,15 @@ async function handleSubmit() {
   font-weight: 600;
 }
 
+.input {
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  padding: 10px;
+  margin: 5px 5px 5px 0;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
 .items-section {
   margin-top: 8px;
 }
@@ -154,13 +188,14 @@ async function handleSubmit() {
   margin-bottom: 8px;
 }
 
-.input {
-  border-radius: 10px;
-  border: 1px solid #d1d5db;
-  padding: 10px;
-  margin: 5px 5px 5px 0;
-  font-size: 15px;
-  box-sizing: border-box;
+.items-scroll {
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+  margin-top: 6px;
 }
 
 .item-block {
@@ -169,6 +204,12 @@ async function handleSubmit() {
   border-radius: 12px;
   background: #f9fafb;
   border: 1px solid #e5e7eb;
+}
+
+.item-header-row {
+  display: flex;
+  justify-content: flex-end;
+  padding-bottom: 4px;
 }
 
 .item-top-row {
@@ -193,6 +234,29 @@ async function handleSubmit() {
 .item-note {
   width: 100%;
   margin-top: 6px;
+}
+
+.remove-btn {
+  border: none;
+  background: transparent;
+  color: #6e0000;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 2px 4px;
+  line-height: 1;
+}
+
+.small-btn {
+  border-radius: 999px;
+  border: none;
+  padding: 6px 12px;
+  font-size: 13px;
+  background: #e5e7eb;
+  cursor: pointer;
+}
+
+.small-btn:hover {
+  background: #d1d5db;
 }
 
 .error {
@@ -230,21 +294,5 @@ async function handleSubmit() {
 .secondary {
   background: #e5e7eb;
   color: #111827;
-}
-
-@media (max-width: 480px) {
-  .modal-card {
-    max-width: 100%;
-    margin: 0 12px;
-    padding: 20px 18px 16px;
-  }
-
-  .modal-title {
-    font-size: 19px;
-  }
-
-  .input {
-    font-size: 14px;
-  }
 }
 </style>
