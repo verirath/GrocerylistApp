@@ -234,12 +234,7 @@ onMounted(loadList);
       <section v-else-if="activeList" class="detail-card">
         <div class="detail-header">
           <h1 class="list-title">
-            <template v-if="editMode">
-              <input v-model="activeList.name" class="title-input" />
-            </template>
-            <template v-else>
               {{ activeList.name }}
-            </template>
           </h1>
         </div>
 
@@ -253,7 +248,8 @@ onMounted(loadList);
             :key="item.id"
             class="item-row"
             :class="{ checked: !editMode && item.is_checked }"
-          >
+          >npm run dev
+
             <template v-if="!editMode">
               <label class="item-main">
                 <input
