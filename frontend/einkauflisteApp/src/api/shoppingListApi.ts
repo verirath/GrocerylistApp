@@ -124,5 +124,30 @@ export async function createItem(
   return createdItem;
 }
 
+export async function deleteItem(
+  listId: number,
+  itemId: number
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/lists/${listId}/items/${itemId}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to delete item: ${res.status} ${text}`);
+  }
+}
+
+export async function deleteList(listId: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/lists/${listId}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to delete list: ${res.status} ${text}`);
+  }
+}
+
 
 

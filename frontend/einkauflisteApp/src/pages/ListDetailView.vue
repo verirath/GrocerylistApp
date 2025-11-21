@@ -5,6 +5,8 @@ import {
   fetchShoppingList,
   updateItem,
   createItem,
+  deleteItem,
+  deleteList,
   type ShoppingListResponse,
   type NewItemPayload,
 } from "../api/shoppingListApi";
@@ -25,6 +27,7 @@ const saving = ref(false);
 const saveError = ref<string | null>(null);
 
 const showNewItemModal = ref(false);
+const addingItems = ref(false);
 
 const activeList = computed<ShoppingListResponse | null>(() =>
   editMode.value && draftList.value ? draftList.value : list.value
@@ -37,6 +40,10 @@ async function loadList() {
 
     const data = await fetchShoppingList(listId.value);
     list.value = data;
+
+    if (editMode.value) {
+      draftList.value = JSON.parse(JSON.stringify(data));
+    }
   } catch (e) {
     console.error(e);
     error.value = "Die Einkaufsliste konnte nicht geladen werden.";
@@ -113,42 +120,79 @@ async function saveEdit() {
   }
 }
 
-function handleBack() {
-  router.back();
+function handleAddItemFab() {
+  showNewItemModal.value = true;
 }
 
 async function handleAddItems(payload: NewItemPayload[]) {
   if (!activeList.value) return;
 
-  for (const newItem of payload) {
-    const created = await createItem(activeList.value.id, newItem);
-    if (draftList.value) {
-      draftList.value.items.push(created);
-    } else if (list.value) {
-      list.value.items.push(created);
-    }
-  }
-
-  showNewItemModal.value = false;
-}
-
-async function handleCreateItem(payload: NewItemPayload) {
-  if (!list.value) return;
+  addingItems.value = true;
+  saveError.value = null;
 
   try {
-    const created = await createItem(list.value.id, payload);
+    for (const newItem of payload) {
+      const created = await createItem(activeList.value.id, newItem);
 
-    list.value.items.push(created);
-
-    if (draftList.value) {
-      draftList.value.items.push(JSON.parse(JSON.stringify(created)));
+      if (draftList.value) {
+        draftList.value.items.push(created);
+      }
+      if (list.value) {
+        list.value.items.push(JSON.parse(JSON.stringify(created)));
+      }
     }
 
     showNewItemModal.value = false;
   } catch (e) {
     console.error(e);
-    saveError.value = "Neues Item konnte nicht angelegt werden.";
+    saveError.value = "Neue Items konnten nicht angelegt werden.";
+  } finally {
+    addingItems.value = false;
   }
+}
+
+async function handleDeleteItem(itemId: number) {
+  if (!activeList.value) return;
+
+  const ok = window.confirm("Dieses Item wirklich löschen?");
+  if (!ok) return;
+
+  try {
+    await deleteItem(activeList.value.id, itemId);
+
+    if (draftList.value) {
+      draftList.value.items = draftList.value.items.filter(
+        (item) => item.id !== itemId
+      );
+    }
+    if (list.value) {
+      list.value.items = list.value.items.filter(
+        (item) => item.id !== itemId
+      );
+    }
+  } catch (e) {
+    console.error(e);
+    saveError.value = "Item konnte nicht gelöscht werden.";
+  }
+}
+
+async function handleDeleteList() {
+  if (!list.value) return;
+
+  const ok = window.confirm("Diese Einkaufsliste wirklich löschen?");
+  if (!ok) return;
+
+  try {
+    await deleteList(list.value.id);
+    router.push({ name: "home" });
+  } catch (e) {
+    console.error(e);
+    saveError.value = "Liste konnte nicht gelöscht werden.";
+  }
+}
+
+function handleBack() {
+  router.back();
 }
 
 onMounted(loadList);
@@ -171,10 +215,10 @@ onMounted(loadList);
           <button
             type="button"
             class="mode-pill"
-            @click="editMode ? cancelEdit() : enterEditMode()">
+            @click="editMode ? cancelEdit() : enterEditMode()"
+          >
             <span :class="['mode-thumb', editMode && 'right']"></span>
           </button>
-
           <span :class="['mode-label', editMode && 'active']">✏️</span>
         </div>
       </div>
@@ -263,6 +307,14 @@ onMounted(loadList);
                   <option value="L">L</option>
                   <option value="PACK">PACK</option>
                 </select>
+
+                <button
+                  type="button"
+                  class="item-delete-btn"
+                  @click="handleDeleteItem(item.id)"
+                >
+                  🗑
+                </button>
               </div>
             </template>
           </li>
@@ -290,13 +342,24 @@ onMounted(loadList);
             {{ saving ? "Speichern…" : "Speichern" }}
           </button>
         </div>
+
+        <div v-if="editMode" class="delete-list-row">
+          <button
+            type="button"
+            class="delete-list-btn"
+            @click="handleDeleteList"
+          >
+            Liste löschen
+          </button>
+        </div>
       </section>
 
       <button
         v-if="activeList && editMode"
         class="fab"
         type="button"
-        @click="showNewItemModal = true"
+        :disabled="addingItems"
+        @click="handleAddItemFab"
       >
         +
       </button>
@@ -306,7 +369,6 @@ onMounted(loadList);
         @close="showNewItemModal = false"
         @submit="handleAddItems"
       />
-
     </main>
   </div>
 </template>
@@ -516,14 +578,14 @@ onMounted(loadList);
 
 .note-input {
   margin-top: 4px;
-  resize: vertical;
 }
 
 .item-qty-edit {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 100px;
+  min-width: 110px;
+  align-items: flex-end;
 }
 
 .qty-input {
@@ -532,6 +594,16 @@ onMounted(loadList);
 
 .unit-input {
   padding-right: 24px;
+}
+
+.item-delete-btn {
+  margin-top: 4px;
+  border: none;
+  background: transparent;
+  color: #991b1b;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
 }
 
 .edit-actions {
@@ -565,6 +637,21 @@ onMounted(loadList);
   color: #111827;
 }
 
+.delete-list-row {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.delete-list-btn {
+  border: none;
+  background: transparent;
+  color: #b91c1c;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
 .fab {
   position: fixed;
   right: 20px;
@@ -582,6 +669,11 @@ onMounted(loadList);
   justify-content: center;
   box-shadow: 0 12px 30px rgb(69 104 108 / 0.8);
   cursor: pointer;
+}
+
+.fab:disabled {
+  opacity: 0.7;
+  cursor: default;
 }
 
 @media (min-width: 768px) {
