@@ -248,7 +248,7 @@ onMounted(loadList);
             :key="item.id"
             class="item-row"
             :class="{ checked: !editMode && item.is_checked }"
-          >npm run dev
+          >
 
             <template v-if="!editMode">
               <label class="item-main">
