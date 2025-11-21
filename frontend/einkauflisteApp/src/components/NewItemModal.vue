@@ -139,7 +139,6 @@ function handleClose() {
 </template>
 
 <style scoped>
-/* gleiche Styles wie dein NewListModal, damit es konsistent bleibt */
 
 .modal-backdrop {
   position: fixed;

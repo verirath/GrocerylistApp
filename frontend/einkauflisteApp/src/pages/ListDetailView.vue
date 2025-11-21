@@ -652,19 +652,13 @@ onMounted(loadList);
   color: #111827;
 }
 
-.delete-list-row {
-  margin-top: 10px;
-  display: flex;
-  justify-content: flex-start;
-}
-
 .delete-list-btn {
   padding: 8px 14px;
   border-radius: 999px;
   font-size: 14px;
   border: none;
   cursor: pointer;
-  background-color: rgba(207, 17, 17, 0.92);
+  background-color: rgba(216, 41, 41, 0.81);
   color: white;
 }
 
