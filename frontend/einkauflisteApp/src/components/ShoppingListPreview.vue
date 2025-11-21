@@ -18,10 +18,6 @@ defineProps({
         <span class="item-qty">{{ item.quantity }} {{ item.unit }}</span>
       </li>
     </ul>
-
-    <div v-if="list.items.length > 3" class="more-hint">
-      … und {{ list.items.length - 3 }} weitere
-    </div>
   </div>
 </template>
 
