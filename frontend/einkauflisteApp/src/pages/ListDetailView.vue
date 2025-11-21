@@ -200,9 +200,9 @@ onMounted(loadList);
 
 <template>
   <div class="page">
-    <header class="header">
+    <router-link to="/" class="header">
       Einkaufslistenbuddy
-    </header>
+    </router-link>
 
     <main class="content">
       <div class="top-row">
@@ -325,33 +325,38 @@ onMounted(loadList);
         </p>
 
         <div v-if="editMode" class="edit-actions">
-          <button
-            type="button"
-            class="secondary"
-            :disabled="saving"
-            @click="cancelEdit"
-          >
-            Abbrechen
-          </button>
-          <button
-            type="button"
-            class="primary"
-            :disabled="saving"
-            @click="saveEdit"
-          >
-            {{ saving ? "Speichern…" : "Speichern" }}
-          </button>
+
+          <div class="left-actions">
+            <button
+              type="button"
+              class="delete-list-btn"
+              @click="handleDeleteList"
+            >
+              Liste löschen
+            </button>
+          </div>
+
+          <div class="right-actions">
+            <button
+              type="button"
+              class="secondary"
+              :disabled="saving"
+              @click="cancelEdit"
+            >
+              Abbrechen
+            </button>
+            <button
+              type="button"
+              class="primary"
+              :disabled="saving"
+              @click="saveEdit"
+            >
+              {{ saving ? "Speichern…" : "Speichern" }}
+            </button>
+          </div>
+
         </div>
 
-        <div v-if="editMode" class="delete-list-row">
-          <button
-            type="button"
-            class="delete-list-btn"
-            @click="handleDeleteList"
-          >
-            Liste löschen
-          </button>
-        </div>
       </section>
 
       <button
@@ -387,6 +392,10 @@ onMounted(loadList);
   font-weight: 600;
   text-align: center;
   font-family: Roboto Mono, Menlo, Consolas, monospace, "Segoe UI", sans-serif;
+  text-decoration: none;
+  display: block;
+  cursor: pointer;
+  color: black;
 }
 
 .content {
@@ -597,7 +606,7 @@ onMounted(loadList);
 }
 
 .item-delete-btn {
-  margin-top: 4px;
+  padding-top: 6px;
   border: none;
   background: transparent;
   color: #991b1b;
@@ -609,7 +618,13 @@ onMounted(loadList);
 .edit-actions {
   margin-top: 14px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.left-actions,
+.right-actions {
+  display: flex;
   gap: 8px;
 }
 
@@ -644,12 +659,13 @@ onMounted(loadList);
 }
 
 .delete-list-btn {
-  border: none;
-  background: transparent;
-  color: #b91c1c;
+  padding: 8px 14px;
+  border-radius: 999px;
   font-size: 14px;
+  border: none;
   cursor: pointer;
-  padding: 4px 0;
+  background-color: rgba(207, 17, 17, 0.92);
+  color: white;
 }
 
 .fab {
@@ -674,6 +690,10 @@ onMounted(loadList);
 .fab:disabled {
   opacity: 0.7;
   cursor: default;
+}
+
+.list-link {
+
 }
 
 @media (min-width: 768px) {
