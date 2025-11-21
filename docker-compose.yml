@@ -33,8 +33,6 @@ services:
       APP_DEBUG: 1
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend:/app
 
   frontend:
     build:
